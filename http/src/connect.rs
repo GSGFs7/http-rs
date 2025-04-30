@@ -80,7 +80,7 @@ impl HttpConnection {
             None => {
                 // Not Found
                 let mut response = HttpResponse::new(404, "Not Found");
-                response.headers.insert("Content-Type", "test/plain");
+                response.headers.insert("Content-Type", "text/plain");
                 response.add_body(HttpBody::from("Not Found"));
 
                 if keep_alive {
