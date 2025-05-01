@@ -4,11 +4,11 @@ use crate::{body::HttpBody, headers::HttpHeaders, version::HttpVersion};
 
 #[derive(Debug)]
 pub struct HttpResponse {
-    pub status_code: u16,
-    pub status_text: String,
-    pub headers: HttpHeaders,
-    pub body: HttpBody,
-    pub version: HttpVersion,
+    status_code: u16,
+    status_text: String,
+    headers: HttpHeaders,
+    body: HttpBody,
+    version: HttpVersion,
     chunked_encoding: bool,
 }
 
@@ -32,6 +32,22 @@ impl HttpResponse {
     pub fn add_body(&mut self, body: HttpBody) -> &mut Self {
         self.body = body;
         self
+    }
+
+    pub fn handlers(&self) -> &HttpHeaders {
+        &self.headers
+    }
+
+    pub fn headers_mut(&mut self) -> &mut HttpHeaders {
+        &mut self.headers
+    }
+
+    pub fn body(&self) -> &HttpBody {
+        &self.body
+    }
+
+    pub fn body_mut(&mut self) -> &mut HttpBody {
+        &mut self.body
     }
 
     pub fn with_streaming_body<R>(mut self, reader: R, buffer_size: usize) -> Self

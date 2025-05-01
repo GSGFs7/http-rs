@@ -213,7 +213,7 @@ mod tests {
 
         let f = root_handlers.get(&HttpMethod::Get).unwrap();
         let mut response = f(HttpRequest::from("GET / HTTP/1.1".to_string()));
-        let body = response.body.read_next().await.unwrap().unwrap();
+        let body = response.body_mut().read_next().await.unwrap().unwrap();
         assert_eq!(body, b"Hello world".to_vec());
     }
 
