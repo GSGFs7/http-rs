@@ -86,6 +86,7 @@ impl RouteNode {
     }
 }
 
+#[must_use]
 #[derive(Debug, Clone)]
 pub struct HttpRouter {
     root: Arc<RouteNode>,

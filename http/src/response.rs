@@ -61,14 +61,14 @@ impl HttpResponse {
         // if not chunked, add content length
         if !self.chunked_encoding {
             if let Some(length) = self.body.content_length() {
-                if !self.headers.hash_map.contains_key("Content-Length") {
+                if !self.headers.contains_key("Content-Length") {
                     let header = format!("Content-Length: {}\r\n", length);
                     writer.write_all(header.as_bytes()).await?;
                 }
             }
         }
 
-        for (key, value) in &self.headers.hash_map {
+        for (key, value) in self.headers.iter() {
             let header_line = format!("{}: {}\r\n", key, value);
             writer.write_all(header_line.as_bytes()).await?;
         }

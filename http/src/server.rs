@@ -31,6 +31,7 @@ impl Default for ServerConfig {
     }
 }
 
+#[must_use]
 #[derive(Default)]
 pub struct HttpServer {
     pub config: ServerConfig,
