@@ -126,7 +126,7 @@ mod tests {
 
     #[test]
     async fn test_find_headers_end() {
-        let headers = b"GET / HTTP/1.1\r\nHost: gsgfs.moe\r\n\r\nsome body data";
-        assert_eq!(find_headers_end(headers), Some(35));
+        let headers = b"POST / HTTP/1.1\r\nHost: gsgfs.moe\r\n\r\nsome body data";
+        assert_eq!(find_headers_end(headers), Some(36));
     }
 }
