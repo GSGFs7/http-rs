@@ -9,4 +9,5 @@ pub mod response;
 pub mod router;
 pub mod server;
 pub mod uri;
+pub mod utils;
 pub mod version;
