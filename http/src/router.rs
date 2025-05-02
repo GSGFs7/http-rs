@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::{collections::HashMap, fmt::Debug, sync::Arc};
 
 use tokio::sync::RwLock;
 
@@ -11,7 +10,7 @@ type Handlers = HashMap<HttpMethod, Arc<HandlerFn>>;
 type Middlewares = Vec<HandlerFn>;
 
 /// Similar with Trie tree
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 #[allow(dead_code)]
 struct RouteNode {
     /// name of current node
@@ -86,8 +85,57 @@ impl RouteNode {
     }
 }
 
+impl Debug for RouteNode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RouteNode")
+            .field("name", &self.name)
+            .field(
+                "handlers",
+                &format!(
+                    "{{ {} handlers }}",
+                    &self.handlers.try_read().map(|h| h.len()).unwrap_or(0)
+                ),
+            )
+            .field(
+                "static_routes",
+                &format!(
+                    "{}",
+                    &self.static_routes.try_read().map(|r| r.len()).unwrap_or(0)
+                ),
+            )
+            .field(
+                "has_param_route",
+                &format!(
+                    "{}",
+                    self.param_route
+                        .try_read()
+                        .map(|p| p.is_some())
+                        .unwrap_or(false)
+                ),
+            )
+            .field(
+                "has_wildcard_handler",
+                &format!(
+                    "{}",
+                    self.wildcard_handler
+                        .try_read()
+                        .map(|w| w.is_some())
+                        .unwrap_or(false)
+                ),
+            )
+            .field(
+                "middlewares",
+                &format!(
+                    "{{ {} middlewares }}",
+                    self.middlewares.try_read().map(|m| m.len()).unwrap_or(0)
+                ),
+            )
+            .finish()
+    }
+}
+
 #[must_use]
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct HttpRouter {
     root: Arc<RouteNode>,
     global_middlewares: Vec<HandlerFn>,
@@ -179,12 +227,24 @@ impl HttpRouter {
             .read()
             .await
             .get(&method)
-            .map(|handler| **handler)
+            .map(|handler| Arc::clone(&**handler)) // get fn and `&` it
     }
 
     pub fn add_global_middleware(&mut self, handler: HandlerFn) -> &mut Self {
         self.global_middlewares.push(handler);
         self
+    }
+}
+
+impl Debug for HttpRouter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("HttpRouter")
+            .field("root", &self.root)
+            .field(
+                "global_middlewares",
+                &format!("{{ {} middleware(s) }}", self.global_middlewares.len()),
+            )
+            .finish()
     }
 }
 
@@ -199,11 +259,15 @@ mod tests {
         let mut router = HttpRouter::new();
 
         router
-            .add(HttpMethod::Get, "/", |_req| {
-                HttpResponse::new(200, "OK").with_body(crate::body::HttpBody::InMemory {
-                    data: b"Hello world".to_vec(),
-                })
-            })
+            .add(
+                HttpMethod::Get,
+                "/",
+                Arc::new(|_req| {
+                    HttpResponse::new(200, "OK").with_body(crate::body::HttpBody::InMemory {
+                        data: b"Hello world".to_vec(),
+                    })
+                }),
+            )
             .await;
 
         println!("{:#?}", router);

@@ -112,6 +112,20 @@ impl From<&str> for HttpBody {
     }
 }
 
+impl From<Vec<u8>> for HttpBody {
+    fn from(value: Vec<u8>) -> Self {
+        HttpBody::InMemory { data: value }
+    }
+}
+
+impl From<&Vec<u8>> for HttpBody {
+    fn from(value: &Vec<u8>) -> Self {
+        HttpBody::InMemory {
+            data: value.clone(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

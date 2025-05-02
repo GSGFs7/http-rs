@@ -1,15 +1,20 @@
+use std::sync::Arc;
+
 use http::{
     body::HttpBody, method::HttpMethod, response::HttpResponse, router::HttpRouter,
     server::HttpServer,
 };
+use tokio::fs;
 
 #[tokio::main]
 async fn main() {
+    let home = fs::read("./src/www/html/home.html").await.unwrap();
+
     let mut binding = HttpRouter::new();
     let router = binding
-        .add(HttpMethod::Get, "/", |_| {
-            HttpResponse::new(200, "OK").with_body(HttpBody::from("Hello world!"))
-        })
+        .add(HttpMethod::Get, "/", Arc::new(move |_| {
+            HttpResponse::new(200, "OK").with_body(HttpBody::from(&home))
+        }))
         .await;
 
     let mut server = HttpServer::new();
