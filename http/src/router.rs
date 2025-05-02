@@ -156,7 +156,7 @@ impl HttpRouter {
     }
 
     /// add a router
-    pub async fn add(&mut self, method: HttpMethod, path: &str, handler: HandlerFn) -> &mut Self {
+    pub async fn add(self, method: HttpMethod, path: &str, handler: HandlerFn) -> Self {
         let segments: Vec<&str> = path.trim_matches('/').split('/').collect();
         let mut current = Arc::clone(&self.root);
 
@@ -256,9 +256,7 @@ mod tests {
 
     #[test]
     async fn test_add_router_to_root() {
-        let mut router = HttpRouter::new();
-
-        router
+        let router = HttpRouter::new()
             .add(
                 HttpMethod::Get,
                 "/",
@@ -270,7 +268,7 @@ mod tests {
             )
             .await;
 
-        println!("{:#?}", router);
+        println!("{:#?}", &router);
 
         let root_handlers = router.root.handlers.read().await;
         assert!(root_handlers.contains_key(&HttpMethod::Get));

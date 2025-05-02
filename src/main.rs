@@ -11,8 +11,7 @@ async fn main() {
     let home = fs::read("./src/www/html/home.html").await.unwrap();
     let test = fs::read("./src/www/html/test.html").await.unwrap();
 
-    let mut binding = HttpRouter::new();
-    let router = binding
+    let router = HttpRouter::new()
         .add(
             HttpMethod::Get,
             "/",
@@ -27,6 +26,6 @@ async fn main() {
         .await;
 
     let mut server = HttpServer::new();
-    server.set_router(router);
+    server.set_router(&router);
     let _ = server.run().await;
 }
