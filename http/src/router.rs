@@ -137,7 +137,9 @@ impl Debug for RouteNode {
 #[must_use]
 #[derive(Clone)]
 pub struct HttpRouter {
+    /// The root node of the router
     root: Arc<RouteNode>,
+    /// Global middlewares
     global_middlewares: Vec<HandlerFn>,
 }
 
@@ -196,6 +198,7 @@ impl HttpRouter {
         self
     }
 
+    /// find the handler by path and method
     pub async fn find_handler(&self, path: &str, method: HttpMethod) -> Option<HandlerFn> {
         let segments: Vec<&str> = path.trim_matches('/').split('/').collect();
         let mut current = Arc::clone(&self.root);

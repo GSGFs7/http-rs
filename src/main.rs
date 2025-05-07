@@ -1,3 +1,6 @@
+/// this file is a simple example of a web server using the http crate
+///
+/// it's so hard to use, i think...
 use std::sync::Arc;
 
 use http::{

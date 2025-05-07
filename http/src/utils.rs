@@ -1,7 +1,10 @@
 /// find the last position of the header
+///
+/// if found, return the position of the end of the header  
+/// if not found, return None
 pub fn find_headers_end(buffer: &[u8]) -> Option<usize> {
     buffer
-        .windows(4)
+        .windows(4) // use windows to find the last position of the header
         .position(|window| window == b"\r\n\r\n")
         .map(|pos| pos + 4)
 }

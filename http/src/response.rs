@@ -4,11 +4,17 @@ use crate::{body::HttpBody, headers::HttpHeaders, version::HttpVersion};
 
 #[derive(Debug)]
 pub struct HttpResponse {
+    /// HTTP status code
     status_code: u16,
+    /// HTTP status text
     status_text: String,
+    /// HTTP headers
     headers: HttpHeaders,
+    /// HTTP body
     body: HttpBody,
+    /// HTTP version
     version: HttpVersion,
+    /// Whether the response uses chunked encoding
     chunked_encoding: bool,
 }
 
@@ -78,14 +84,14 @@ impl HttpResponse {
         if !self.chunked_encoding {
             if let Some(length) = self.body.content_length() {
                 if !self.headers.contains_key("Content-Length") {
-                    let header = format!("Content-Length: {}\r\n", length);
+                    let header = format!("Content-Length: {length}\r\n");
                     writer.write_all(header.as_bytes()).await?;
                 }
             }
         }
 
         for (key, value) in self.headers.iter() {
-            let header_line = format!("{}: {}\r\n", key, value);
+            let header_line = format!("{key}: {value}\r\n");
             writer.write_all(header_line.as_bytes()).await?;
         }
 
@@ -191,7 +197,7 @@ mod tests {
                 mut self: std::pin::Pin<&mut Self>,
                 _cx: &mut std::task::Context<'_>,
                 buf: &mut io::ReadBuf<'_>,
-            ) -> Poll<std::io::Result<()>> {
+            ) -> Poll<io::Result<()>> {
                 if self.current >= self.chunk.len() {
                     return Poll::Ready(Ok(()));
                 }
@@ -226,7 +232,7 @@ mod tests {
         let response_str = String::from_utf8_lossy(&buffer);
         assert!(response_str.contains("Transfer-Encoding: chunked"));
 
-        print!("{}", response_str);
+        print!("{response_str}");
 
         for chunk in &chunks {
             let chunk_size = format!("{:X}", chunk.len());

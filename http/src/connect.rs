@@ -14,9 +14,13 @@ use crate::{
 pub struct HttpConnection {
     /// TCP stream
     stream: TcpStream,
+    /// Router
     router: Arc<HttpRouter>,
+    /// Timeout for each connection
     timeout: Duration,
+    /// Buffer size for reading
     buffer_size: usize,
+    /// Whether to keep the connection alive
     keep_alive: bool,
 }
 
@@ -41,6 +45,7 @@ impl HttpConnection {
         self
     }
 
+    /// Process the connection
     pub async fn process(&mut self) -> Result<(), ServerError> {
         let mut buffer = vec![0; self.buffer_size];
         let mut read_bytes = 0;
@@ -110,4 +115,3 @@ impl HttpConnection {
         Ok(())
     }
 }
-

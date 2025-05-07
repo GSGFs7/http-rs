@@ -1,4 +1,5 @@
 #[derive(Debug, PartialEq, Eq, Default)]
+/// HTTP version
 pub enum HttpVersion {
     #[default]
     V1_1,

@@ -1,5 +1,6 @@
 #[derive(Debug, Default)]
 pub struct HttpUri {
+    /// HTTP URI path
     pub path: String,
 }
 

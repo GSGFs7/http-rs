@@ -4,10 +4,15 @@ use crate::{
 
 #[derive(Debug)]
 pub struct HttpRequest {
+    /// HTTP method
     pub method: HttpMethod,
+    /// HTTP headers
     pub headers: HttpHeaders,
+    /// HTTP body
     pub body: Option<HttpBody>,
+    /// HTTP URI
     pub uri: HttpUri,
+    /// HTTP version
     pub version: HttpVersion,
 }
 
@@ -17,6 +22,7 @@ impl From<String> for HttpRequest {
     }
 }
 
+/// Parse HTTP request from a string
 impl From<&str> for HttpRequest {
     fn from(value: &str) -> Self {
         let mut parsed_method = HttpMethod::NoSupport;

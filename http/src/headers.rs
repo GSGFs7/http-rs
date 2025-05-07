@@ -2,6 +2,7 @@ use std::collections::{HashMap, hash_map};
 
 #[derive(Debug, Default, PartialEq, Eq)]
 pub struct HttpHeaders {
+    /// Header key-value pairs
     hash_map: HashMap<String, String>,
 }
 

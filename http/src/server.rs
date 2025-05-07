@@ -14,9 +14,13 @@ const CONNECTION_TIMEOUT: usize = 5;
 
 #[derive(Clone)]
 pub struct ServerConfig {
+    /// Server address
     pub address: String,
+    /// Router
     pub router: Arc<HttpRouter>,
+    /// Timeout for each connection
     pub timeout: usize,
+    /// Maximum number of connections
     pub max_connections: usize,
 }
 
@@ -34,6 +38,7 @@ impl Default for ServerConfig {
 #[must_use]
 #[derive(Default)]
 pub struct HttpServer {
+    /// Server configuration
     pub config: ServerConfig,
 }
 
@@ -74,7 +79,7 @@ impl HttpServer {
             let permit = match semaphore.clone().acquire_owned().await {
                 Ok(permit) => permit,
                 Err(e) => {
-                    eprintln!("Get permit failed: {}", e);
+                    eprintln!("Get permit failed: {e}");
                     time::sleep(Duration::from_secs(self.config.timeout as u64)).await;
                     continue;
                 }
@@ -83,12 +88,12 @@ impl HttpServer {
             let (socket, addr) = match listener.accept().await {
                 Ok(connection) => connection,
                 Err(e) => {
-                    eprintln!("Accept connection failed: {}", e);
+                    eprintln!("Accept connection failed: {e}",);
                     continue;
                 }
             };
 
-            println!("New connection from {}", addr);
+            println!("New connection from {addr}",);
 
             let mut connection = HttpConnection::new(
                 socket,
@@ -100,7 +105,7 @@ impl HttpServer {
                 let _permit = permit;
 
                 if let Err(e) = connection.process().await {
-                    eprintln!("Connection error from {}: {:?}", addr, e);
+                    eprintln!("Connection error from {addr}: {e:?}");
                 };
             });
         }

@@ -1,4 +1,5 @@
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+/// HTTP method
 pub enum HttpMethod {
     Get,
     Post,

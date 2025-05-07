@@ -29,6 +29,7 @@ impl HttpBody {
         }
     }
 
+    /// Create a new streaming body
     pub fn from_reader<R>(reader: R, buffer_size: usize) -> Self
     where
         R: AsyncRead + Send + Sync + 'static,
@@ -40,6 +41,7 @@ impl HttpBody {
         }
     }
 
+    /// Read the next chunk of data from the body
     pub async fn read_next(&mut self) -> tokio::io::Result<Option<Vec<u8>>> {
         match self {
             HttpBody::InMemory { data } => {
