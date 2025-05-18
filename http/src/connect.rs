@@ -101,7 +101,7 @@ impl HttpConnection {
             }
         };
 
-        let mut response = handler(request);
+        let mut response = handler(request).await;
 
         if keep_alive {
             response.headers_mut().insert("Connection", "keep-alive");

@@ -9,23 +9,28 @@ use http::{
 };
 use tokio::fs;
 
+// define a test handler
+async fn test(_req: http::request::HttpRequest) -> HttpResponse {
+    let test = fs::read("./src/www/html/test.html").await.unwrap();
+    HttpResponse::new(200, "OK").with_body(HttpBody::from(&test))
+}
+
 #[tokio::main]
 async fn main() {
-    let home = fs::read("./src/www/html/home.html").await.unwrap();
-    let test = fs::read("./src/www/html/test.html").await.unwrap();
-
     let router = HttpRouter::new()
         .add(
             HttpMethod::Get,
             "/",
-            Arc::new(move |_| HttpResponse::new(200, "OK").with_body(HttpBody::from(&home))),
+            Arc::new(|_| {
+                Box::pin(async move {
+                    let home = fs::read("./src/www/html/home.html").await.unwrap();
+                    HttpResponse::new(200, "OK").with_body(HttpBody::from(&home))
+                })
+            }),
         )
         .await
-        .add(
-            HttpMethod::Get,
-            "/test",
-            Arc::new(move |_| HttpResponse::new(200, "OK").with_body(HttpBody::from(&test))),
-        )
+        // a simple way to add a handler
+        .get("/test", test)
         .await;
 
     let mut server = HttpServer::new();

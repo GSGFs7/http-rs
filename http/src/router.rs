@@ -1,8 +1,8 @@
-use std::{collections::HashMap, fmt::Debug, sync::Arc};
+use std::{collections::HashMap, fmt::Debug, pin::Pin, sync::Arc};
 
 use tokio::sync::RwLock;
 
-use crate::{handler::HandlerFn, method::HttpMethod};
+use crate::{handler::HandlerFn, method::HttpMethod, request::HttpRequest, response::HttpResponse};
 
 type ParamRoute = Option<(String, Box<RouteNode>)>;
 type StaticRoutes = HashMap<String, Arc<RouteNode>>;
@@ -198,6 +198,19 @@ impl HttpRouter {
         self
     }
 
+    /// add a GET router
+    pub async fn get<F, Fut>(self, path: &str, func: F) -> Self
+    where
+        F: Fn(HttpRequest) -> Fut + Send + Sync + 'static,
+        Fut: Future<Output = HttpResponse> + Send + 'static,
+    {
+        let handler = Arc::new(move |req: HttpRequest| {
+            Box::pin(func(req)) as Pin<Box<dyn Future<Output = HttpResponse> + Send>>
+        });
+
+        self.add(HttpMethod::Get, path, handler).await
+    }
+
     /// find the handler by path and method
     pub async fn find_handler(&self, path: &str, method: HttpMethod) -> Option<HandlerFn> {
         let segments: Vec<&str> = path.trim_matches('/').split('/').collect();
@@ -264,8 +277,10 @@ mod tests {
                 HttpMethod::Get,
                 "/",
                 Arc::new(|_req| {
-                    HttpResponse::new(200, "OK").with_body(crate::body::HttpBody::InMemory {
-                        data: b"Hello world".to_vec(),
+                    Box::pin(async {
+                        HttpResponse::new(200, "OK").with_body(crate::body::HttpBody::InMemory {
+                            data: b"Hello world".to_vec(),
+                        })
                     })
                 }),
             )
@@ -277,7 +292,7 @@ mod tests {
         assert!(root_handlers.contains_key(&HttpMethod::Get));
 
         let f = root_handlers.get(&HttpMethod::Get).unwrap();
-        let mut response = f(HttpRequest::from("GET / HTTP/1.1".to_string()));
+        let mut response = f(HttpRequest::from("GET / HTTP/1.1".to_string())).await;
         let body = response.body_mut().read_next().await.unwrap().unwrap();
         assert_eq!(body, b"Hello world".to_vec());
     }
