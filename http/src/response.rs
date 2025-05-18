@@ -35,6 +35,16 @@ impl HttpResponse {
         self
     }
 
+    pub fn with_headers(mut self, headers: HttpHeaders) -> Self {
+        self.headers = headers;
+        self
+    }
+
+    pub fn insert_header(&mut self, key: &str, value: &str) -> &mut Self {
+        self.headers.insert(key, value);
+        self
+    }
+
     pub fn add_body(&mut self, body: HttpBody) -> &mut Self {
         self.body = body;
         self
