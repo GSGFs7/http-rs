@@ -4,15 +4,30 @@
 use std::sync::Arc;
 
 use http::{
-    body::HttpBody, method::HttpMethod, response::HttpResponse, router::HttpRouter,
-    server::HttpServer,
+    body::HttpBody, method::HttpMethod, request::HttpRequest, response::HttpResponse,
+    router::HttpRouter, server::HttpServer,
 };
-use tokio::fs;
+use tokio::fs::{self, File};
 
 // define a test handler
 async fn test(_req: http::request::HttpRequest) -> HttpResponse {
     let test = fs::read("./src/www/html/test.html").await.unwrap();
     HttpResponse::new(200, "OK").with_body(HttpBody::from(&test))
+}
+
+// large file handler
+async fn stream_large_file_handler(_req: HttpRequest) -> HttpResponse {
+    match File::open("./src/www/test_file.bin").await {
+        Ok(file) => {
+            let mut response = HttpResponse::new(200, "OK").with_streaming_body(file, 8192);
+            response.insert_header("Transfer-Encoding", "chunked");
+            response
+        }
+        Err(e) => {
+            eprintln!("{e}");
+            HttpResponse::new(404, "Not Found").with_body("File not found".into())
+        }
+    }
 }
 
 #[tokio::main]
@@ -31,6 +46,8 @@ async fn main() {
         .await
         // a simple way to add a handler
         .get("/test", test)
+        .await
+        .get("/test_file.bin", stream_large_file_handler)
         .await;
 
     let mut server = HttpServer::new();
