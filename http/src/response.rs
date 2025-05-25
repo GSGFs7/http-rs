@@ -91,13 +91,12 @@ impl HttpResponse {
         writer.write_all(header.as_bytes()).await?;
 
         // if not chunked, add content length
-        if !self.chunked_encoding {
-            if let Some(length) = self.body.content_length() {
-                if !self.headers.contains_key("Content-Length") {
-                    let header = format!("Content-Length: {length}\r\n");
-                    writer.write_all(header.as_bytes()).await?;
-                }
-            }
+        if !self.chunked_encoding
+            && let Some(length) = self.body.content_length()
+            && !self.headers.contains_key("Content-Length")
+        {
+            let header = format!("Content-Length: {length}\r\n");
+            writer.write_all(header.as_bytes()).await?;
         }
 
         for (key, value) in self.headers.iter() {
