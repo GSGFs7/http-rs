@@ -10,6 +10,10 @@ impl HttpUri {
             path: String::new(),
         }
     }
+
+    pub fn as_string(&self) -> String {
+        self.path.clone()
+    }
 }
 
 impl From<&str> for HttpUri {
@@ -17,5 +21,11 @@ impl From<&str> for HttpUri {
         HttpUri {
             path: value.to_string(),
         }
+    }
+}
+
+impl From<String> for HttpUri {
+    fn from(value: String) -> Self {
+        HttpUri { path: value }
     }
 }

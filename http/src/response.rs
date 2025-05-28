@@ -40,7 +40,7 @@ impl HttpResponse {
         self
     }
 
-    pub fn insert_header(&mut self, key: &str, value: &str) -> &mut Self {
+    pub fn insert_header(mut self, key: &str, value: &str) -> Self {
         self.headers.insert(key, value);
         self
     }

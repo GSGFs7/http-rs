@@ -1,6 +1,7 @@
 pub mod body;
 pub mod connect;
 pub mod error;
+pub mod feature;
 pub mod handler;
 pub mod headers;
 pub mod method;

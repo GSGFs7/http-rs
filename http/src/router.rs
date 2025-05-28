@@ -173,6 +173,7 @@ impl HttpRouter {
             if segment.starts_with(':') {
                 todo!();
             } else if segment == "*" {
+                // TODO: handle wildcard route
                 todo!();
             } else {
                 // if not found the node, create it

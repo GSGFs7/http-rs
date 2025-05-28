@@ -18,11 +18,9 @@ async fn test(_req: http::request::HttpRequest) -> HttpResponse {
 // large file handler
 async fn stream_large_file_handler(_req: HttpRequest) -> HttpResponse {
     match File::open("./src/www/test_file.bin").await {
-        Ok(file) => {
-            let mut response = HttpResponse::new(200, "OK").with_streaming_body(file, 8192);
-            response.insert_header("Transfer-Encoding", "chunked");
-            response
-        }
+        Ok(file) => HttpResponse::new(200, "OK")
+            .with_streaming_body(file, 8192)
+            .insert_header("Transfer-Encoding", "chunked"),
         Err(e) => {
             eprintln!("{e}");
             HttpResponse::new(404, "Not Found").with_body("File not found".into())
