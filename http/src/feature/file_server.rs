@@ -1,6 +1,8 @@
 use std::path::Path;
 
-use crate::{body::HttpBody, request::HttpRequest, response::HttpResponse};
+use crate::{
+    body::HttpBody, request::HttpRequest, response::HttpResponse, utils::get_content_type,
+};
 
 use tokio::{fs::File, io::AsyncReadExt};
 
@@ -46,13 +48,13 @@ pub async fn file_server_handler(req: HttpRequest) -> HttpResponse {
                 HttpResponse::new(200, "OK")
                     .with_body(HttpBody::from(data))
                     .insert_header("Content-Length", &file_size.to_string())
-                    .insert_header("Content-Type", "application/octet-stream")
+                    .insert_header("Content-Type", get_content_type(&req.uri.path))
                     .insert_header("Cache-Control", "public, max-age=31536000")
             } else {
                 HttpResponse::new(200, "OK")
                     .with_streaming_body(file, 8192)
                     .insert_header("Content-Length", &file_size.to_string())
-                    .insert_header("Content-Type", "application/octet-stream")
+                    .insert_header("Content-Type", get_content_type(&req.uri.path))
                     .insert_header("Accept-Ranges", "bytes")
                     .insert_header("Cache-Control", "public, max-age=31536000")
             }

@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 pub mod body;
 pub mod connect;
 pub mod error;

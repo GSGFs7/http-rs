@@ -27,40 +27,6 @@ struct RouteNode {
     middlewares: Arc<RwLock<Middlewares>>,
 }
 
-// tokio::sync::RwLock not have `Clone` impl
-// impl Clone for RouteNode {
-//     fn clone(&self) -> Self {
-//         let handlers_clone = tokio::runtime::Runtime::new()
-//             .unwrap()
-//             .block_on(async { self.handlers.read().await.clone() });
-
-//         let static_routes_clone = tokio::runtime::Runtime::new()
-//             .unwrap()
-//             .block_on(async { self.static_routes.read().await.clone() });
-
-//         let param_route_clone = tokio::runtime::Runtime::new()
-//             .unwrap()
-//             .block_on(async { self.param_route.read().await.clone() });
-
-//         let wildcard_handler_clone = tokio::runtime::Runtime::new()
-//             .unwrap()
-//             .block_on(async { self.wildcard_handler.read().await.clone() });
-
-//         let middlewares_clone = tokio::runtime::Runtime::new()
-//             .unwrap()
-//             .block_on(async { self.middlewares.read().await.clone() });
-
-//         RouteNode {
-//             name: self.name.clone(),
-//             handlers: RwLock::new(handlers_clone),
-//             static_routes: RwLock::new(static_routes_clone),
-//             param_route: RwLock::new(param_route_clone),
-//             wildcard_handler: RwLock::new(wildcard_handler_clone),
-//             middlewares: RwLock::new(middlewares_clone),
-//         }
-//     }
-// }
-
 impl RouteNode {
     pub fn new() -> Self {
         RouteNode {
@@ -153,6 +119,7 @@ impl Default for HttpRouter {
 }
 
 impl HttpRouter {
+    // create a new HttpRouter
     pub fn new() -> Self {
         Self::default()
     }
@@ -163,7 +130,7 @@ impl HttpRouter {
         let mut current = Arc::clone(&self.root);
 
         // Move on the tree to find the node
-        for segment in segments {
+        for segment in segments.iter() {
             if segment.is_empty() {
                 continue;
             }
@@ -172,12 +139,14 @@ impl HttpRouter {
 
             if segment.starts_with(':') {
                 todo!();
-            } else if segment == "*" {
-                // TODO: handle wildcard route
-                todo!();
+            } else if *segment == "*" {
+                *node_ref.wildcard_handler.write().await = Some(handler.clone());
+
+                // Path segments following the wildcard are ignored because * matches all subsequent segments
+                break;
             } else {
                 // if not found the node, create it
-                if !node_ref.static_routes.read().await.contains_key(segment) {
+                if !node_ref.static_routes.read().await.contains_key(*segment) {
                     let new_node = Arc::new(RouteNode::with_name(segment));
                     node_ref
                         .static_routes
@@ -185,16 +154,18 @@ impl HttpRouter {
                         .await
                         .insert(segment.to_string(), new_node);
                 }
-                current = Arc::clone(node_ref.static_routes.read().await.get(segment).unwrap());
+                current = Arc::clone(node_ref.static_routes.read().await.get(*segment).unwrap());
             }
         }
 
-        // add handler
-        Arc::clone(&current)
-            .handlers
-            .write()
-            .await
-            .insert(method, Arc::new(handler));
+        // If there is no wildcard in the path, the processor is added to the last node
+        if !segments.contains(&"*") {
+            Arc::clone(&current)
+                .handlers
+                .write()
+                .await
+                .insert(method, Arc::new(handler));
+        }
 
         self
     }
@@ -217,26 +188,28 @@ impl HttpRouter {
         let segments: Vec<&str> = path.trim_matches('/').split('/').collect();
         let mut current = Arc::clone(&self.root);
 
+        // Traverse the tree to find the node
         for segment in segments {
             if segment.is_empty() {
                 continue;
             }
 
-            let node_ref = Arc::clone(&current);
-            if !node_ref.static_routes.read().await.contains_key(segment) {
-                let new_node = Arc::new(RouteNode::with_name(segment));
-                node_ref
-                    .static_routes
-                    .write()
-                    .await
-                    .insert(segment.to_string(), new_node);
+            if current.wildcard_handler.read().await.is_some() {
+                // if find a wildcard handler, return it
+                return current.wildcard_handler.read().await.clone();
             }
-            let route = node_ref.static_routes.read().await;
-            let route = match route.get(segment) {
-                Some(route) => route,
-                None => return None,
+
+            // next node
+            let next = {
+                let route_map = current.static_routes.read().await;
+                match route_map.get(segment) {
+                    Some(route) => Arc::clone(route),
+                    None => return None,
+                }
             };
-            current = Arc::clone(route);
+
+            // replace current node with next node
+            current = next;
         }
 
         current
@@ -247,6 +220,7 @@ impl HttpRouter {
             .map(|handler| Arc::clone(&**handler)) // get fn and `&` it
     }
 
+    /// Add a global middleware
     pub fn add_global_middleware(&mut self, handler: HandlerFn) -> &mut Self {
         self.global_middlewares.push(handler);
         self
@@ -300,4 +274,9 @@ mod tests {
 
     #[test]
     async fn test_long_path_router() {}
+
+    #[test]
+    async fn test_wildcard_routing() {
+        
+    }
 }
