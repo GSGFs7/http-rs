@@ -11,13 +11,13 @@ use tokio::fs::{self, File};
 
 // define a test handler
 async fn test(_req: http::request::HttpRequest) -> HttpResponse {
-    let test = fs::read("./src/www/html/test.html").await.unwrap();
+    let test = fs::read("./examples/basic_server/www/html/test.html").await.unwrap();
     HttpResponse::new(200, "OK").with_body(HttpBody::from(&test))
 }
 
 // large file handler
 async fn stream_large_file_handler(_req: HttpRequest) -> HttpResponse {
-    match File::open("./src/www/test_file.bin").await {
+    match File::open("./examples/basic_server/www/test_file.bin").await {
         Ok(file) => HttpResponse::new(200, "OK")
             .with_streaming_body(file, 8192)
             .insert_header("Transfer-Encoding", "chunked"),
@@ -36,7 +36,9 @@ async fn main() {
             "/",
             Arc::new(|_| {
                 Box::pin(async move {
-                    let home = fs::read("./src/www/html/home.html").await.unwrap();
+                    let home = fs::read("./examples/basic_server/www/html/home.html")
+                        .await
+                        .unwrap();
                     HttpResponse::new(200, "OK").with_body(HttpBody::from(&home))
                 })
             }),
